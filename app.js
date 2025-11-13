@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', function() {
   if (raw) {
     try {
       STATE = JSON.parse(raw);
-    } catch (e) {
+    } catch (e){
       console.warn('parse error', e);
     }
   }
