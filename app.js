@@ -128,8 +128,8 @@ function renderContacts() {
   $contactsList.innerHTML = htmlContactRender;
 
   var assignedList = '<option value="">— Assigné à —</option>';
-  for (var j=0;j<STATE.contacts.length;j++){
-    var contactAssigned = STATE.contacts[j];
+  for (var j=0;j<contacts.length;j++){
+    var contactAssigned = contacts[j];
     assignedList += '<option value="'+contactAssigned.id+'">'+contactAssigned.name+'</option>';
   }
   $assignee.innerHTML = assignedList;
