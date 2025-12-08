@@ -1,3 +1,4 @@
+import { MIN_NAME, MIN_TITLE, SAVE_DEBOUNCE_MS } from "./src/js/config";
 
 var STATE = {
   contacts: [],
@@ -6,11 +7,6 @@ var STATE = {
   isDirty: false,
   lastSavedAt: null
 };
-
-// "Constantes" magiques
-var MIN_NAME = 2;
-var MIN_TITLE = 3;
-var SAVE_DEBOUNCE_MS = 150;
 
 // Démarrage
 document.addEventListener('DOMContentLoaded', function() {
