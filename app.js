@@ -1,5 +1,3 @@
-/* global $contactsList, $tasksList, $assignee, $contactsStatus, $tasksStatus */
-
 var STATE = {
   contacts: [],
   tasks: [],
@@ -23,8 +21,8 @@ document.addEventListener('DOMContentLoaded', function() {
   if (localStateRaw) {
     try {
       STATE = JSON.parse(localStateRaw);
-    } catch (err){
-      console.warn('parse error', err);
+    } catch {
+      console.warn('parse error');
     }
   }
 
@@ -251,8 +249,8 @@ function saveStateToLocalStorage() {
     localStorage.setItem('mini_crm_state', JSON.stringify(STATE));
     STATE.lastSavedAt = new Date().toISOString();
     STATE.isDirty = false; // ou pas
-  } catch(err) {
-    console.error('save fail', err);
+  } catch {
+    console.error('save fail');
   }
 }
 function autosave(){
@@ -283,7 +281,7 @@ function syncFromServerMaybe(callbackFunction) {
   };
   try {
     xhr.send(); // va 404, et alors ?
-  } catch(err) {
+  } catch {
     callbackFunction && callbackFunction();
   }
 }
