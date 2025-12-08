@@ -1,4 +1,3 @@
-
 var STATE = {
   contacts: [],
   tasks: [],
@@ -12,6 +11,9 @@ var MIN_NAME = 2;
 var MIN_TITLE = 3;
 var SAVE_DEBOUNCE_MS = 150;
 
+// Variables globales pour les éléments DOM
+var $contactsList, $tasksList, $assignee, $contactsStatus, $tasksStatus;
+
 // Démarrage
 document.addEventListener('DOMContentLoaded', function() {
   // Charge depuis localStorage
@@ -19,17 +21,17 @@ document.addEventListener('DOMContentLoaded', function() {
   if (localStateRaw) {
     try {
       STATE = JSON.parse(localStateRaw);
-    } catch (error){
-      console.warn('parse error', error);
+    } catch {
+      console.warn('parse error');
     }
   }
 
   // elements
-  window.$contactsList = document.getElementById('contactsList');
-  window.$tasksList = document.getElementById('tasksList');
-  window.$assignee = document.getElementById('t_assignee');
-  window.$contactsStatus = document.getElementById('contactsStatus');
-  window.$tasksStatus = document.getElementById('tasksStatus');
+  $contactsList = document.getElementById('contactsList');
+  $tasksList = document.getElementById('tasksList');
+  $assignee = document.getElementById('t_assignee');
+  $contactsStatus = document.getElementById('contactsStatus');
+  $tasksStatus = document.getElementById('tasksStatus');
 
   // Bind events (au pif)
   document.getElementById('btnAddContact').addEventListener('click', onAddContactClick);
@@ -211,7 +213,7 @@ function bodyClickHandler(event) {
     if (c) {
       c.meta = c.meta || {};
       c.meta.score = (c.meta.score || 0) + 1;
-      // rien ne s’en sert, mais on affiche un peu
+      // rien ne s'en sert, mais on affiche un peu
       $contactsStatus.textContent = 'Boosté: '+c.name+' (score='+c.meta.score+')';
     }
   }
@@ -247,8 +249,8 @@ function saveStateToLocalStorage() {
     localStorage.setItem('mini_crm_state', JSON.stringify(STATE));
     STATE.lastSavedAt = new Date().toISOString();
     STATE.isDirty = false; // ou pas
-  } catch(error) {
-    console.error('save fail', error);
+  } catch {
+    console.error('save fail');
   }
 }
 function autosave(){
@@ -279,7 +281,7 @@ function syncFromServerMaybe(callbackFunction) {
   };
   try {
     xhr.send(); // va 404, et alors ?
-  } catch(error) {
+  } catch {
     callbackFunction && callbackFunction();
   }
 }
