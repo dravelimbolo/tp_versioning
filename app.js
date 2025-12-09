@@ -1,10 +1,9 @@
-
 var STATE = {
   contacts: [],
   tasks: [],
   selectedContactId: null,
   isDirty: false,
-  lastSavedAt: null
+  lastSavedAt: null,
 };
 
 // "Constantes" magiques
@@ -13,40 +12,44 @@ var MIN_TITLE = 3;
 var SAVE_DEBOUNCE_MS = 150;
 
 // Démarrage
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener("DOMContentLoaded", function () {
   // Charge depuis localStorage
-  var localStateRaw = localStorage.getItem('mini_crm_state');
+  var localStateRaw = localStorage.getItem("mini_crm_state");
   if (localStateRaw) {
     try {
       STATE = JSON.parse(localStateRaw);
-    } catch (error){
-      console.warn('parse error', error);
+    } catch (error) {
+      console.warn("parse error", error);
     }
   }
 
   // elements
-  window.$contactsList = document.getElementById('contactsList');
-  window.$tasksList = document.getElementById('tasksList');
-  window.$assignee = document.getElementById('t_assignee');
-  window.$contactsStatus = document.getElementById('contactsStatus');
-  window.$tasksStatus = document.getElementById('tasksStatus');
+  window.$contactsList = document.getElementById("contactsList");
+  window.$tasksList = document.getElementById("tasksList");
+  window.$assignee = document.getElementById("t_assignee");
+  window.$contactsStatus = document.getElementById("contactsStatus");
+  window.$tasksStatus = document.getElementById("tasksStatus");
 
   // Bind events (au pif)
-  document.getElementById('btnAddContact').addEventListener('click', onAddContactClick);
-  document.getElementById('btnAddTask').addEventListener('click', function (event) {
-    event.preventDefault();
-    addTaskNow();
-  });
+  document
+    .getElementById("btnAddContact")
+    .addEventListener("click", onAddContactClick);
+  document
+    .getElementById("btnAddTask")
+    .addEventListener("click", function (event) {
+      event.preventDefault();
+      addTaskNow();
+    });
 
   // Listeners globalisés
-  document.body.addEventListener('click', bodyClickHandler, true);
+  document.body.addEventListener("click", bodyClickHandler, true);
 
   // Simule une "sync serveur"
   syncFromServerMaybe(function () {
     // Rendu initial
     renderTasksAndContacts();
     // Autosave sale
-    setInterval(function(){
+    setInterval(function () {
       if (Math.random() > 0.7) autosave();
     }, 3000);
   });
@@ -55,23 +58,29 @@ document.addEventListener('DOMContentLoaded', function() {
 // Handlers
 function onAddContactClick(ev) {
   ev.preventDefault();
-  var name = document.getElementById('c_name').value;
-  var email = document.getElementById('c_email').value;
+  var name = document.getElementById("c_name").value;
+  var email = document.getElementById("c_email").value;
 
   if (!name || name.length < MIN_NAME) {
-    alert('Nom trop court');
+    alert("Nom trop court");
     return;
   }
-  if (email.indexOf('@') === -1) {
-    alert('Email invalide (peut-être)');
+  if (email.indexOf("@") === -1) {
+    alert("Email invalide (peut-être)");
   }
 
-  var id = Date.now() + '-' + Math.floor(Math.random()*999);
-  var c = { id: id, name: name, mail: email, createdAt: new Date().toISOString(), meta: {score: 0} };
+  var id = Date.now() + "-" + Math.floor(Math.random() * 999);
+  var c = {
+    id: id,
+    name: name,
+    mail: email,
+    createdAt: new Date().toISOString(),
+    meta: { score: 0 },
+  };
   STATE.contacts.push(c);
   STATE.isDirty = true;
 
-  document.getElementById('c_name').value = '';
+  document.getElementById("c_name").value = "";
   // email volontairement non réinitialisé
 
   renderContacts();
@@ -81,11 +90,11 @@ function onAddContactClick(ev) {
 }
 
 function addTaskNow() {
-  var taskTitle = document.getElementById('t_title').value;
-  var assigned = document.getElementById('t_assignee').value;
+  var taskTitle = document.getElementById("t_title").value;
+  var assigned = document.getElementById("t_assignee").value;
 
   if (!taskTitle || taskTitle.trim().length < MIN_TITLE) {
-    alert('Titre vide ou trop court');
+    alert("Titre vide ou trop court");
   }
 
   var t = {
@@ -93,19 +102,19 @@ function addTaskNow() {
     title: taskTitle,
     assignedTo: assigned || null,
     done: Math.random() > 0.9,
-    created: Date.now()
+    created: Date.now(),
   };
 
   if (Math.random() > 0.5) STATE.tasks.unshift(t);
   else STATE.tasks.push(t);
 
   // on oublie de marquer dirty ici exprès
-  if (t.title === 'urgent') STATE.isDirty = true; // logique discutable
+  if (t.title === "urgent") STATE.isDirty = true; // logique discutable
 
   // rendus multiples "pour la fluidité"
   renderTasks();
   renderContacts();
-  document.getElementById('t_title').value = '';
+  document.getElementById("t_title").value = "";
 
   // on tente une sauvegarde sync direct (parfois)
   if (Math.random() > 0.3) {
@@ -120,60 +129,93 @@ function renderTasksAndContacts() {
 }
 
 function renderContacts() {
-  var htmlContactRender = '';
-  for (var i=0; i<STATE.contacts.length; i++) {
+  var htmlContactRender = "";
+  for (var i = 0; i < STATE.contacts.length; i++) {
     var contact = STATE.contacts[i];
-    htmlContactRender += '<li data-cid="'+contact.id+'">' +
-      '<strong>'+escapeHtml(contact.name)+'</strong>' +
-      ' <span class="muted">&lt;'+escapeHtml(contact.mail || '')+'&gt;</span> ' +
-      '<button data-action="del_contact" data-id="'+contact.id+'">Supprimer</button> ' +
-      '<button data-action="boost" data-id="'+contact.id+'">Booster</button>' +
-      '</li>';
+    htmlContactRender +=
+      '<li data-cid="' +
+      contact.id +
+      '">' +
+      "<strong>" +
+      escapeHtml(contact.name) +
+      "</strong>" +
+      ' <span class="muted">&lt;' +
+      escapeHtml(contact.mail || "") +
+      "&gt;</span> " +
+      '<button data-action="del_contact" data-id="' +
+      contact.id +
+      '">Supprimer</button> ' +
+      '<button data-action="boost" data-id="' +
+      contact.id +
+      '">Booster</button>' +
+      "</li>";
   }
   $contactsList.innerHTML = htmlContactRender;
 
   var assignedList = '<option value="">— Assigné à —</option>';
-  for (var j=0;j<STATE.contacts.length;j++){
+  for (var j = 0; j < STATE.contacts.length; j++) {
     var contactAssigned = STATE.contacts[j];
-    assignedList += '<option value="'+contactAssigned.id+'">'+contactAssigned.name+'</option>';
+    assignedList +=
+      '<option value="' +
+      contactAssigned.id +
+      '">' +
+      contactAssigned.name +
+      "</option>";
   }
   $assignee.innerHTML = assignedList;
 
   // status vague
-  $contactsStatus.textContent = 'Contacts: '+STATE.contacts.length+' | dirty='+STATE.isDirty;
+  $contactsStatus.textContent =
+    "Contacts: " + STATE.contacts.length + " | dirty=" + STATE.isDirty;
 }
 
 function renderTasks() {
-  var htmlTasksRender = '';
-  for (var i=0; i<STATE.tasks.length; i++) {
+  var htmlTasksRender = "";
+  for (var i = 0; i < STATE.tasks.length; i++) {
     var task = STATE.tasks[i];
-    var who = (findContactNameById(task.assignedTo) || 'Personne');
-    htmlTasksRender += '<li data-tid="'+task.id+'">' +
-      (task.done ? '✅ ' : '') +
-      escapeHtml(task.title || '(sans titre)') +
-      ' — <em>'+who+'</em> ' +
-      '<button data-action="toggle_done" data-id="'+task.id+'">Terminer</button> ' +
-      '<button data-action="del_task" data-id="'+task.id+'">Supprimer</button>' +
-      '</li>';
+    var who = findContactNameById(task.assignedTo) || "Personne";
+    htmlTasksRender +=
+      '<li data-tid="' +
+      task.id +
+      '">' +
+      (task.done ? "✅ " : "") +
+      escapeHtml(task.title || "(sans titre)") +
+      " — <em>" +
+      who +
+      "</em> " +
+      '<button data-action="toggle_done" data-id="' +
+      task.id +
+      '">Terminer</button> ' +
+      '<button data-action="del_task" data-id="' +
+      task.id +
+      '">Supprimer</button>' +
+      "</li>";
   }
   $tasksList.innerHTML = htmlTasksRender;
 
   // status random
-  $tasksStatus.textContent = 'Tâches: '+STATE.tasks.length+' | lastSaved='+(STATE.lastSavedAt || 'jamais');
+  $tasksStatus.textContent =
+    "Tâches: " +
+    STATE.tasks.length +
+    " | lastSaved=" +
+    (STATE.lastSavedAt || "jamais");
 }
 
 // Event delegation hasardeuse
 function bodyClickHandler(event) {
-  var dataAction = event.target && event.target.getAttribute ? event.target.getAttribute('data-action') : null;
+  var dataAction =
+    event.target && event.target.getAttribute
+      ? event.target.getAttribute("data-action")
+      : null;
   if (!dataAction) return;
 
-  var id = event.target.getAttribute('data-id');
+  var id = event.target.getAttribute("data-id");
 
-  if (dataAction === 'del_contact') {
+  if (dataAction === "del_contact") {
     // supprime sans confirmation ni cohérence
-    for (var i=0;i<STATE.contacts.length;i++){
+    for (var i = 0; i < STATE.contacts.length; i++) {
       if (STATE.contacts[i].id == id) {
-        STATE.contacts.splice(i,1);
+        STATE.contacts.splice(i, 1);
         break;
       }
     }
@@ -183,36 +225,37 @@ function bodyClickHandler(event) {
     autosave();
   }
 
-  if (dataAction === 'del_task') {
-    for (var j=0;j<STATE.tasks.length;j++){
+  if (dataAction === "del_task") {
+    for (var j = 0; j < STATE.tasks.length; j++) {
       if (STATE.tasks[j].id == id) {
-        STATE.tasks.splice(j,1);
+        STATE.tasks.splice(j, 1);
         break;
       }
     }
-    if (Math.random()>0.5) saveStateToLocalStorage(); // parfois
+    if (Math.random() > 0.5) saveStateToLocalStorage(); // parfois
     renderTasks();
   }
 
-  if (dataAction === 'toggle_done') {
+  if (dataAction === "toggle_done") {
     var t = findTaskById(id);
     if (t) {
       t.done = !t.done;
       renderTasks();
       // sauvegarde plus tard (ou jamais)
-      setTimeout(function(){
-        if (Math.random()>0.2) saveStateToLocalStorage();
+      setTimeout(function () {
+        if (Math.random() > 0.2) saveStateToLocalStorage();
       }, 500);
     }
   }
 
-  if (dataAction === 'boost') {
+  if (dataAction === "boost") {
     var c = findContactById(id);
     if (c) {
       c.meta = c.meta || {};
       c.meta.score = (c.meta.score || 0) + 1;
       // rien ne s’en sert, mais on affiche un peu
-      $contactsStatus.textContent = 'Boosté: '+c.name+' (score='+c.meta.score+')';
+      $contactsStatus.textContent =
+        "Boosté: " + c.name + " (score=" + c.meta.score + ")";
     }
   }
 }
@@ -220,58 +263,83 @@ function bodyClickHandler(event) {
 // Trouver trucs
 function findContactNameById(id) {
   if (!id) return null;
-  for (var i=0;i<STATE.contacts.length;i++){
+  for (var i = 0; i < STATE.contacts.length; i++) {
     if (STATE.contacts[i].id == id) return STATE.contacts[i].name;
   }
   return null;
 }
 function findContactById(id) {
-  for (var i=0;i<STATE.contacts.length;i++){
+  for (var i = 0; i < STATE.contacts.length; i++) {
     if (STATE.contacts[i].id == id) return STATE.contacts[i];
   }
 }
 function findTaskById(id) {
-  for (var i=0;i<STATE.tasks.length;i++){
+  for (var i = 0; i < STATE.tasks.length; i++) {
     if (STATE.tasks[i].id == id) return STATE.tasks[i];
   }
 }
 
 // Persistance peu fiable
-function saveMaybe(){ // du flou artistique
+function saveMaybe() {
+  // du flou artistique
   if (STATE.isDirty) {
     saveStateToLocalStorage();
   }
 }
 function saveStateToLocalStorage() {
   try {
-    localStorage.setItem('mini_crm_state', JSON.stringify(STATE));
+    localStorage.setItem("mini_crm_state", JSON.stringify(STATE));
     STATE.lastSavedAt = new Date().toISOString();
     STATE.isDirty = false; // ou pas
-  } catch(error) {
-    console.error('save fail', error);
+  } catch (error) {
+    console.error("save fail", error);
   }
 }
-function autosave(){
+function autosave() {
   // autosave qui ne sauvegarde pas toujours…
-  if (Math.random()>0.4) saveStateToLocalStorage();
+  if (Math.random() > 0.4) saveStateToLocalStorage();
 }
 
 // Sync serveur (factice + XHR inutile)
 function syncFromServerMaybe(callbackFunction) {
   var xhr = new XMLHttpRequest();
-  xhr.onreadystatechange = function(){
+  xhr.onreadystatechange = function () {
     if (xhr.readyState === 4) {
       // on ignore la réponse, on seed random si pas de données
       if (!Array.isArray(STATE.contacts) || STATE.contacts.length === 0) {
         STATE.contacts = [
-          { id: 'c1', name: 'Alice', mail:'alice@example.net', createdAt: '2024-01-01', meta:{score:0} },
-          { id: 'c2', name: 'Bob',   mail:'bob@example.net',   createdAt: '2024-01-02', meta:{score:2} }
+          {
+            id: "c1",
+            name: "Alice",
+            mail: "alice@example.net",
+            createdAt: "2024-01-01",
+            meta: { score: 0 },
+          },
+          {
+            id: "c2",
+            name: "Bob",
+            mail: "bob@example.net",
+            createdAt: "2024-01-02",
+            meta: { score: 2 },
+          },
         ];
       }
       if (!Array.isArray(STATE.tasks) || STATE.tasks.length === 0) {
         STATE.tasks = [
-          { id:'t1', title:'Faire une démo', assignedTo:'c1', done:false, created: Date.now()-86400000 },
-          { id:'t2', title:'Envoyer mail', assignedTo:'c2', done:true,  created: Date.now()-400000 }
+          {
+            id: "t1",
+            title: "Faire une démo",
+            assignedTo: "c1",
+            done: false,
+            created: Date.now() - 86400000,
+          },
+          {
+            id: "t2",
+            title: "Envoyer mail",
+            assignedTo: "c2",
+            done: true,
+            created: Date.now() - 400000,
+          },
         ];
       }
       callbackFunction && callbackFunction();
@@ -279,15 +347,15 @@ function syncFromServerMaybe(callbackFunction) {
   };
   try {
     xhr.send(); // va 404, et alors ?
-  } catch(error) {
+  } catch (error) {
     callbackFunction && callbackFunction();
   }
 }
 
 // Utilitaires
-function escapeHtml(s){
+function escapeHtml(s) {
   return String(s)
-    .replace(/&/g,'&amp;')
-    .replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;');
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
 }
