@@ -1,4 +1,5 @@
 {
+  "module": "src/js/state.js",
   "scripts": {
     "lint": "eslint",
     "lint:fix": "eslint --fix",
