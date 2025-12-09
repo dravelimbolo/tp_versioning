@@ -1,52 +1,53 @@
+// app.js — Version "ça pique les yeux"
+// Note: ce fichier est volontairement mauvais pour l'entraînement.
+
 var STATE = {
-  contacts: [],
-  tasks: [],
-  selectedContactId: null,
-  isDirty: false,
-  lastSavedAt: null
+  contacts: [],     // parfois persisté
+  tasks: [],        // parfois pas
+  selectedContactId: null, // jamais utilisé proprement
+  isDirty: false,   // utilisé n'importe comment
+  lastSavedAt: null // pas fiable
 };
 
 // "Constantes" magiques
+var API_BASE = '/api'; // ne sert presque à rien
 var MIN_NAME = 2;
 var MIN_TITLE = 3;
-var SAVE_DEBOUNCE_MS = 150;
-
-// Variables globales pour les éléments DOM
-var $contactsList, $tasksList, $assignee, $contactsStatus, $tasksStatus;
+var SAVE_DEBOUNCE_MS = 150; // parce que pourquoi pas
 
 // Démarrage
 document.addEventListener('DOMContentLoaded', function() {
-  // Charge depuis localStorage
-  var localStateRaw = localStorage.getItem('mini_crm_state');
-  if (localStateRaw) {
+  // Charge depuis localStorage (ou pas)
+  var raw = localStorage.getItem('mini_crm_state');
+  if (raw) {
     try {
-      STATE = JSON.parse(localStateRaw);
-    } catch {
-      console.warn('parse error');
+      STATE = JSON.parse(raw);
+    } catch (e) {
+      console.warn('parse error', e);
     }
   }
 
   // elements
-  $contactsList = document.getElementById('contactsList');
-  $tasksList = document.getElementById('tasksList');
-  $assignee = document.getElementById('t_assignee');
-  $contactsStatus = document.getElementById('contactsStatus');
-  $tasksStatus = document.getElementById('tasksStatus');
+  window.$contactsList = document.getElementById('contactsList');
+  window.$tasksList = document.getElementById('tasksList');
+  window.$assignee = document.getElementById('t_assignee');
+  window.$contactsStatus = document.getElementById('contactsStatus');
+  window.$tasksStatus = document.getElementById('tasksStatus');
 
   // Bind events (au pif)
   document.getElementById('btnAddContact').addEventListener('click', onAddContactClick);
-  document.getElementById('btnAddTask').addEventListener('click', function (event) {
-    event.preventDefault();
+  document.getElementById('btnAddTask').addEventListener('click', function (e) {
+    e.preventDefault();
     addTaskNow();
   });
 
-  // Listeners globalisés
+  // Listeners globalisés, YOLO
   document.body.addEventListener('click', bodyClickHandler, true);
 
   // Simule une "sync serveur"
   syncFromServerMaybe(function () {
     // Rendu initial
-    renderTasksAndContacts();
+    renderAll();
     // Autosave sale
     setInterval(function(){
       if (Math.random() > 0.7) autosave();
@@ -61,11 +62,12 @@ function onAddContactClick(ev) {
   var email = document.getElementById('c_email').value;
 
   if (!name || name.length < MIN_NAME) {
-    alert('Nom trop court');
+    alert('Nom trop court'); // UX au top
     return;
   }
   if (email.indexOf('@') === -1) {
-    alert('Email invalide (peut-être)');
+    alert('Email invalide (peut-être)'); // ¯\_(ツ)_/¯
+    // On continue quand même parce que… voilà.
   }
 
   var id = Date.now() + '-' + Math.floor(Math.random()*999);
@@ -73,31 +75,36 @@ function onAddContactClick(ev) {
   STATE.contacts.push(c);
   STATE.isDirty = true;
 
+  // Réinitialise partiellement les champs (mais pas tous)
   document.getElementById('c_name').value = '';
   // email volontairement non réinitialisé
 
+  // double rendu, ça fait sérieux
   renderContacts();
-  renderTasks();
+  renderTasks(); // pour la liste d'assignés (c'est faux mais bon)
 
+  // Sauvegarde "debounced" bricolée
   setTimeout(saveMaybe, SAVE_DEBOUNCE_MS);
 }
 
 function addTaskNow() {
-  var taskTitle = document.getElementById('t_title').value;
-  var assigned = document.getElementById('t_assignee').value;
+  var title = document.getElementById('t_title').value;
+  var who = document.getElementById('t_assignee').value;
 
-  if (!taskTitle || taskTitle.trim().length < MIN_TITLE) {
+  if (!title || title.trim().length < MIN_TITLE) {
     alert('Titre vide ou trop court');
+    // on n'arrête pas pour tester l’état bizarre
   }
 
   var t = {
     id: String(Math.random()).slice(2),
-    title: taskTitle,
-    assignedTo: assigned || null,
-    done: Math.random() > 0.9,
+    title: title,
+    assignedTo: who || null,
+    done: Math.random() > 0.9, // parce que pourquoi pas
     created: Date.now()
   };
 
+  // parfois on met en tête, parfois en queue
   if (Math.random() > 0.5) STATE.tasks.unshift(t);
   else STATE.tasks.push(t);
 
@@ -112,66 +119,70 @@ function addTaskNow() {
   // on tente une sauvegarde sync direct (parfois)
   if (Math.random() > 0.3) {
     saveStateToLocalStorage();
+  } else {
+    // ou pas
   }
 }
 
 // Rendus (duplications assumées)
-function renderTasksAndContacts() {
+function renderAll() {
   renderContacts();
   renderTasks();
 }
 
+// Presque pareil que renderTasks, mais avec des subtilités inutiles
 function renderContacts() {
-  var htmlContactRender = '';
+  var html = '';
   for (var i=0; i<STATE.contacts.length; i++) {
-    var contact = STATE.contacts[i];
-    htmlContactRender += '<li data-cid="'+contact.id+'">' +
-      '<strong>'+escapeHtml(contact.name)+'</strong>' +
-      ' <span class="muted">&lt;'+escapeHtml(contact.mail || '')+'&gt;</span> ' +
-      '<button data-action="del_contact" data-id="'+contact.id+'">Supprimer</button> ' +
-      '<button data-action="boost" data-id="'+contact.id+'">Booster</button>' +
+    var c = STATE.contacts[i];
+    html += '<li data-cid="'+c.id+'">' +
+      '<strong>'+escapeHtml(c.name)+'</strong>' +
+      ' <span class="muted">&lt;'+escapeHtml(c.mail || '')+'&gt;</span> ' +
+      '<button data-action="del_contact" data-id="'+c.id+'">Supprimer</button> ' +
+      '<button data-action="boost" data-id="'+c.id+'">Booster</button>' +
       '</li>';
   }
-  $contactsList.innerHTML = htmlContactRender;
+  $contactsList.innerHTML = html;
 
-  var assignedList = '<option value="">— Assigné à —</option>';
+  // remplit la liste d'assignés (ici, pas dans tasks)
+  var opt = '<option value="">— Assigné à —</option>';
   for (var j=0;j<STATE.contacts.length;j++){
-    var contactAssigned = STATE.contacts[j];
-    assignedList += '<option value="'+contactAssigned.id+'">'+contactAssigned.name+'</option>';
+    var cc = STATE.contacts[j];
+    opt += '<option value="'+cc.id+'">'+cc.name+'</option>';
   }
-  $assignee.innerHTML = assignedList;
+  $assignee.innerHTML = opt;
 
   // status vague
   $contactsStatus.textContent = 'Contacts: '+STATE.contacts.length+' | dirty='+STATE.isDirty;
 }
 
 function renderTasks() {
-  var htmlTasksRender = '';
+  var html2 = '';
   for (var i=0; i<STATE.tasks.length; i++) {
-    var task = STATE.tasks[i];
-    var who = (findContactNameById(task.assignedTo) || 'Personne');
-    htmlTasksRender += '<li data-tid="'+task.id+'">' +
-      (task.done ? '✅ ' : '') +
-      escapeHtml(task.title || '(sans titre)') +
+    var t = STATE.tasks[i];
+    var who = (findContactNameById(t.assignedTo) || 'Personne');
+    html2 += '<li data-tid="'+t.id+'">' +
+      (t.done ? '✅ ' : '') +
+      escapeHtml(t.title || '(sans titre)') +
       ' — <em>'+who+'</em> ' +
-      '<button data-action="toggle_done" data-id="'+task.id+'">Terminer</button> ' +
-      '<button data-action="del_task" data-id="'+task.id+'">Supprimer</button>' +
+      '<button data-action="toggle_done" data-id="'+t.id+'">Terminer</button> ' +
+      '<button data-action="del_task" data-id="'+t.id+'">Supprimer</button>' +
       '</li>';
   }
-  $tasksList.innerHTML = htmlTasksRender;
+  $tasksList.innerHTML = html2;
 
   // status random
   $tasksStatus.textContent = 'Tâches: '+STATE.tasks.length+' | lastSaved='+(STATE.lastSavedAt || 'jamais');
 }
 
 // Event delegation hasardeuse
-function bodyClickHandler(event) {
-  var dataAction = event.target && event.target.getAttribute ? event.target.getAttribute('data-action') : null;
-  if (!dataAction) return;
+function bodyClickHandler(e) {
+  var a = e.target && e.target.getAttribute ? e.target.getAttribute('data-action') : null;
+  if (!a) return;
 
-  var id = event.target.getAttribute('data-id');
+  var id = e.target.getAttribute('data-id');
 
-  if (dataAction === 'del_contact') {
+  if (a === 'del_contact') {
     // supprime sans confirmation ni cohérence
     for (var i=0;i<STATE.contacts.length;i++){
       if (STATE.contacts[i].id == id) {
@@ -181,11 +192,11 @@ function bodyClickHandler(event) {
     }
     // on ne purge pas les tâches orphelines, tant pis
     STATE.isDirty = Math.random() > 0.5;
-    renderTasksAndContacts();
+    renderAll();
     autosave();
   }
 
-  if (dataAction === 'del_task') {
+  if (a === 'del_task') {
     for (var j=0;j<STATE.tasks.length;j++){
       if (STATE.tasks[j].id == id) {
         STATE.tasks.splice(j,1);
@@ -196,7 +207,7 @@ function bodyClickHandler(event) {
     renderTasks();
   }
 
-  if (dataAction === 'toggle_done') {
+  if (a === 'toggle_done') {
     var t = findTaskById(id);
     if (t) {
       t.done = !t.done;
@@ -208,12 +219,12 @@ function bodyClickHandler(event) {
     }
   }
 
-  if (dataAction === 'boost') {
+  if (a === 'boost') {
     var c = findContactById(id);
     if (c) {
       c.meta = c.meta || {};
       c.meta.score = (c.meta.score || 0) + 1;
-      // rien ne s'en sert, mais on affiche un peu
+      // rien ne s’en sert, mais on affiche un peu
       $contactsStatus.textContent = 'Boosté: '+c.name+' (score='+c.meta.score+')';
     }
   }
@@ -249,8 +260,8 @@ function saveStateToLocalStorage() {
     localStorage.setItem('mini_crm_state', JSON.stringify(STATE));
     STATE.lastSavedAt = new Date().toISOString();
     STATE.isDirty = false; // ou pas
-  } catch {
-    console.error('save fail');
+  } catch(e) {
+    console.error('save fail', e);
   }
 }
 function autosave(){
@@ -259,8 +270,9 @@ function autosave(){
 }
 
 // Sync serveur (factice + XHR inutile)
-function syncFromServerMaybe(callbackFunction) {
+function syncFromServerMaybe(cb) {
   var xhr = new XMLHttpRequest();
+  xhr.open('GET', API_BASE + '/seed.json'); // cette route n’existe pas
   xhr.onreadystatechange = function(){
     if (xhr.readyState === 4) {
       // on ignore la réponse, on seed random si pas de données
@@ -276,13 +288,13 @@ function syncFromServerMaybe(callbackFunction) {
           { id:'t2', title:'Envoyer mail', assignedTo:'c2', done:true,  created: Date.now()-400000 }
         ];
       }
-      callbackFunction && callbackFunction();
+      cb && cb();
     }
   };
   try {
     xhr.send(); // va 404, et alors ?
-  } catch {
-    callbackFunction && callbackFunction();
+  } catch(e) {
+    cb && cb();
   }
 }
 
@@ -292,4 +304,16 @@ function escapeHtml(s){
     .replace(/&/g,'&amp;')
     .replace(/</g,'&lt;')
     .replace(/>/g,'&gt;');
+}
+
+// Code mort / pas fini (exprès)
+function updateContactEmailMaybe(id, newMail){
+  // TODO: implémenter un jour
+  // ou pas
+}
+
+function sortTasksByWeird(t1, t2){
+  // fonction jamais utilisée
+  if ((t1.done && !t2.done) || (t1.title > t2.title)) return -1;
+  return 1;
 }

@@ -1,122 +1,161 @@
-# 🚀 Mini CRM – TP Versioning & Architecture Modulaire
+# TP – Refactorisation et versionning d’un mini CRM JavaScript
+
+## Objectif
+
+Ce TP consiste à **refactoriser et versionner proprement** une application JavaScript monolithique et “spaghetti” :  
+le **Mini CRM**, une petite interface de gestion de contacts et de tâches.
+
+L’objectif pédagogique est de :
+
+- Structurer le projet pour le rendre maintenable.
+- Appliquer les bonnes pratiques de **versionning Git** et de **collaboration** (branches, PR, conventions).
+- Mettre en place des **outils de qualité de code** (ESLint, Prettier).
+- Introduire une architecture minimale et modulaire.
+- Mettre en œuvre des **tests automatisés** et une logique déterministe.
 
 ---
 
-## 📌 Contexte du projet
+## Étapes du TP
 
-**Mini CRM** est une application JavaScript conçue pour gérer des **contacts** et des **tâches** de manière efficace. Ce projet s’inscrit dans le cadre d’un TP visant à :
-- Transformer un code monolithique en une **architecture modulaire**
-- Appliquer les **bonnes pratiques Git** (branches, commits, PR)
-- Assurer la **maintenabilité** et la **testabilité** du code
-- Utiliser des outils de qualité (ESLint, Prettier, Jest)
+### 1. Organisation et planification
 
----
-
-## 📁 Structure du projet
-
-```markdown
-TP_VERSIONING/
-├─ .gitignore
-├─ style/
-│   └── styles.css
-├─ CHANGELOG.md
-├─ README.md
-├─ app.js
-├─ architecture.md
-├─ contributing.md
-├─ git-workflow.md
-├─ index.html
-├─ package.json
-├─ release.md
-└─ tests/
-```
+- Créer un **tableau Kanban** (GitHub Projects, Notion, Trello, etc.) et **prioriser les tâches**.
+- Répartir les issues selon la logique _To do / In progress / Done_.
 
 ---
 
-## ⚙️ Prérequis
+### 2. Initialisation du projet
 
-Pour exécuter ce projet, assurez-vous d’avoir installé :
-- **Node.js** (version 16 ou supérieure)
-- **npm** (généralement installé avec Node.js)
-- Un **navigateur moderne** (Chrome, Firefox, Edge)
-- **Git** configuré avec votre nom et e-mail utilisateur
-- Des connaissances de base en **JavaScript ES6+**, **DOM** et **Git**
-
----
-
-## 🛠️ Installation
-
-### 1. Cloner le dépôt
-```bash
-git clone https://github.com/ton-utilisateur/TP_VERSIONING.git
-cd TP_VERSIONING
-```
-
-### 2. Installer les dépendances
-```bash
-npm install
-```
-
-### 3. Lancer le serveur de développement
-```bash
-npm start
-```
-*(Ouvre automatiquement `index.html` dans votre navigateur par défaut)*
-
-### 4. Exécuter les tests unitaires
-```bash
-npm test
-```
-
-### 5. Vérifier la qualité du code
-```bash
-npm run lint
-npm run format
-```
+- Initialiser le **repository Git** avec deux branches :
+  - `main` (stabilisée)
+  - `develop` (intégration)
+- Héberger le projet sur **GitHub**.
+- Définir la **licence GPL** dans le fichier `LICENSE`.
+- Créer un **README** clair présentant :
+  - le contexte du projet ;
+  - la structure actuelle du code ;
+  - les axes d’amélioration prévus.
 
 ---
 
-## 🤝 Contribution
+### 3. Convention de versionning
 
-### Processus de contribution
-1. **Créer une issue** sur GitHub pour décrire votre contribution.
-2. **Créer une branche** dédiée à partir de `develop` :
-   ```bash
-   git checkout develop
-   git pull origin develop
-   git checkout -b feature/ma-nouvelle-fonctionnalite
-   ```
-3. **Effectuer vos modifications** et commiter avec des messages clairs :
-   ```bash
-   git add .
-   git commit -m "feat: ajouter une nouvelle fonctionnalité de contact"
-   ```
-4. **Ouvrir une Pull Request** vers la branche `develop`.
-5. **Ajouter des reviewers** et cocher la checklist de la PR.
-6. **Rebaser et merger** après validation :
-   ```bash
-   git pull --rebase origin develop
-   ```
-
-### Conventions de commits
-- `feat:` → nouvelle fonctionnalité
-- `fix:` → correction de bug
-- `refactor:` → amélioration du code existant
-- `test:` → ajout ou mise à jour de tests
-- `chore:` → maintenance, configuration ou dépendances
+- Définir les **conventions de nommage** :
+  - Branches : `feature/`, `fix/`, `refactor/`, `test/`
+  - Commits : **Conventional Commits** (`feat:`, `fix:`, `chore:`, etc.)
+- Définir un **modèle de Pull Request** pour les revues de code.
 
 ---
 
+### 4. Mise en qualité du code
 
+- Installer et configurer **ESLint** + **Prettier**.
+- Extraire le **CSS** dans un fichier séparé.
+- _(Optionnel)_ : refactoriser le CSS en **SCSS** avec variables et mixins.
 
-## 📜 Licence
+---
 
-**LICENCE PUBLIQUE GÉNÉRALE GNU**
+### 5. Nettoyage et lisibilité
+
+- Renommer les **variables incohérentes** (`mail` → `email`, `who` → `assignedTo`).
+- Supprimer le **code mort** (`updateContactEmailMaybe`, `sortTasksByWeird`…).
+- Extraire tous les **sélecteurs DOM** dans un seul module (ex: `dom.js`).
+- Remplacer les `alert()` par des **messages d’interface non bloquants** (toasts, notifications, etc.).
+
+---
+
+### 6. Architecture minimale
+
+- Isoler la **persistance** (`localStorage`) dans un module `storage.js`.
+- Créer deux modules indépendants :
+  - `contacts.js` pour la gestion des contacts.
+  - `tasks.js` pour la gestion des tâches.
+- Introduire un **router** (dépendance npm, ex: `navigo`, `page.js`) pour afficher :
+  - **Accueil**
+  - **Contacts**
+  - **Tâches**
+
+---
+
+### 7. Tests et couverture
+
+- Ajouter des tests unitaires avec **Jest** (et **Supertest** si besoin).
+- Tester la logique pure :
+  - création / suppression de contact ;
+  - création / suppression / toggle de tâche.
+- Mesurer la **couverture de tests** et fixer un seuil minimum (ex : 70%).
+
+---
+
+### 8. Robustesse et UX
+
+- Implémenter une **validation de formulaire propre** :
+  - nom ≥ 2 caractères ;
+  - email valide ;
+  - titre de tâche ≥ 3 caractères ;
+  - sans `alert()` bloquant.
+- Empêcher la **suppression silencieuse** : ajout d’une confirmation non bloquante.
+- Gérer les **tâches orphelines** (après suppression d’un contact) :
+  - réassigner à “Non assigné” ;
+  - ou proposer un choix.
+- Supprimer la **randomisation** du comportement (`Math.random()`).
+- Remplacer les requêtes **XHR** par **fetch()** avec gestion d’erreurs claire.
+
+---
+
+### 9. Bonnes pratiques Git et collaboration
+
+- **Branching** : 1 _issue_ = 1 _branche_, PR limitée (< 150 lignes).
+- **Rebase propre** avant chaque merge (résolution de conflits notamment sur `renderContacts` / `renderTasks`).
+- **Code Review** systématique avec checklist :
+  - nommage cohérent ;
+  - pas de duplication ;
+  - test présent ;
+  - accessibilité respectée.
+- **Changelog** généré automatiquement via **Conventional Commits**.
+
+---
+
+## Extensions possibles (pour aller plus loin)
+
+- Ajouter un **filtre de tâches** (toutes / en cours / terminées).
+- Implémenter un **tri** et une **recherche** côté contacts.
+- Ajouter un **export/import JSON** (sauvegarde manuelle).
+- Implémenter un **Dark Mode** en injectant proprement des classes CSS.
+
+---
+
+## Livrables attendus
+
+- Repository GitHub public (avec `main` et `develop`).
+- Kanban des issues (capture d’écran ou lien).
+- README mis à jour et complet.
+- Historique Git propre (commits lisibles et cohérents).
+- Modules JS et tests fonctionnels.
+
+---
+
+## Évaluation
+
+| Critère         | Description                              | Pondération |
+| --------------- | ---------------------------------------- | ----------- |
+| Organisation    | Kanban, branches, convention Git         | 20%         |
+| Qualité du code | ESLint, refactor, structure modulaire    | 30%         |
+| Fonctionnalités | Persistance, router, comportement stable | 25%         |
+| Tests           | Présence, pertinence, couverture         | 15%         |
+| Collaboration   | Pull requests, revues, changelog         | 10%         |
+
+---
+
+## License
+
+LICENCE PUBLIQUE GÉNÉRALE GNU  
 Version 3, 29 juin 2007
-Copyright (C) 2007 Free Software Foundation, Inc.
+
+Copyright (C) 2007 Free Software Foundation, Inc.  
 [https://fsf.org/](https://fsf.org/)
 
-Cette licence garantit à chacun le droit d’utiliser, d’étudier, de modifier et de redistribuer le logiciel, à condition que ces mêmes libertés soient préservées pour tous les utilisateurs et que toute distribution mentionne clairement la présente licence et le code source correspondant.
+Cette licence garantit à chacun **le droit d’utiliser, d’étudier, de modifier et de redistribuer** le logiciel, à condition que ces mêmes libertés soient **préservées pour tous les utilisateurs** et que toute distribution mentionne clairement la présente licence et le code source correspondant.
 
-Pour le texte complet de la licence GNU GPL version 3, voir :
+Pour le texte complet de la licence GNU GPL version 3, voir :  
 [https://www.gnu.org/licenses/gpl-3.0.txt](https://www.gnu.org/licenses/gpl-3.0.txt)
