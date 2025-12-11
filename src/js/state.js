@@ -17,11 +17,6 @@ export default function State() {
       state.isDirty = true;
     },
 
-    update(fn) {
-      state = fn(state);
-      state.isDirty = true;
-    },
-
     reset() {
       state = {
         contacts: [],

@@ -1,5 +1,4 @@
-import State from "./src/State.js";
-
+import State from "./src/js/state.js";
 
 let STATE = State();
 
@@ -9,40 +8,44 @@ var MIN_TITLE = 3;
 var SAVE_DEBOUNCE_MS = 150;
 
 // Démarrage
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener("DOMContentLoaded", function () {
   // Charge depuis localStorage
-  var localStateRaw = localStorage.getItem('mini_crm_state');
+  var localStateRaw = localStorage.getItem("mini_crm_state");
   if (localStateRaw) {
     try {
       STATE.set(JSON.parse(localStateRaw));
-    } catch (error){
-      console.warn('parse error', error);
+    } catch (error) {
+      console.warn("parse error", error);
     }
   }
 
   // elements
-  window.$contactsList = document.getElementById('contactsList');
-  window.$tasksList = document.getElementById('tasksList');
-  window.$assignee = document.getElementById('t_assignee');
-  window.$contactsStatus = document.getElementById('contactsStatus');
-  window.$tasksStatus = document.getElementById('tasksStatus');
+  window.$contactsList = document.getElementById("contactsList");
+  window.$tasksList = document.getElementById("tasksList");
+  window.$assignee = document.getElementById("t_assignee");
+  window.$contactsStatus = document.getElementById("contactsStatus");
+  window.$tasksStatus = document.getElementById("tasksStatus");
 
   // Bind events (au pif)
-  document.getElementById('btnAddContact').addEventListener('click', onAddContactClick);
-  document.getElementById('btnAddTask').addEventListener('click', function (event) {
-    event.preventDefault();
-    addTaskNow();
-  });
+  document
+    .getElementById("btnAddContact")
+    .addEventListener("click", onAddContactClick);
+  document
+    .getElementById("btnAddTask")
+    .addEventListener("click", function (event) {
+      event.preventDefault();
+      addTaskNow();
+    });
 
   // Listeners globalisés
-  document.body.addEventListener('click', bodyClickHandler, true);
+  document.body.addEventListener("click", bodyClickHandler, true);
 
   // Simule une "sync serveur"
   syncFromServerMaybe(function () {
     // Rendu initial
     renderTasksAndContacts();
     // Autosave sale
-    setInterval(function(){
+    setInterval(function () {
       if (Math.random() > 0.7) autosave();
     }, 3000);
   });
@@ -51,22 +54,32 @@ document.addEventListener('DOMContentLoaded', function() {
 // Handlers
 function onAddContactClick(ev) {
   ev.preventDefault();
-  var name = document.getElementById('c_name').value;
-  var email = document.getElementById('c_email').value;
+  var name = document.getElementById("c_name").value;
+  var email = document.getElementById("c_email").value;
 
   if (!name || name.length < MIN_NAME) {
-    alert('Nom trop court');
+    alert("Nom trop court");
     return;
   }
-  if (email.indexOf('@') === -1) {
-    alert('Email invalide (peut-être)');
+  if (email.indexOf("@") === -1) {
+    alert("Email invalide (peut-être)");
   }
 
-  var id = Date.now() + '-' + Math.floor(Math.random()*999);
-  var c = { id: id, name: name, mail: email, createdAt: new Date().toISOString(), meta: {score: 0} };
-  STATE.update(state => ({ ...state, contacts: [...state.contacts, c] }));
+  var id = Date.now() + "-" + Math.floor(Math.random() * 999);
+  var c = {
+    id: id,
+    name: name,
+    mail: email,
+    createdAt: new Date().toISOString(),
+    meta: { score: 0 },
+  };
+  
+  var currentState = STATE.get();
+  STATE.set({
+    contacts: [...currentState.contacts, c],
+  });
 
-  document.getElementById('c_name').value = '';
+  document.getElementById("c_name").value = "";
   // email volontairement non réinitialisé
 
   renderContacts();
@@ -76,11 +89,11 @@ function onAddContactClick(ev) {
 }
 
 function addTaskNow() {
-  var taskTitle = document.getElementById('t_title').value;
-  var assigned = document.getElementById('t_assignee').value;
+  var taskTitle = document.getElementById("t_title").value;
+  var assigned = document.getElementById("t_assignee").value;
 
   if (!taskTitle || taskTitle.trim().length < MIN_TITLE) {
-    alert('Titre vide ou trop court');
+    alert("Titre vide ou trop court");
   }
 
   var t = {
@@ -88,18 +101,24 @@ function addTaskNow() {
     title: taskTitle,
     assignedTo: assigned || null,
     done: Math.random() > 0.9,
-    created: Date.now()
+    created: Date.now(),
   };
 
-  STATE.update(state => {
-    const tasks = Math.random() > 0.5 ? [t, ...state.tasks] : [...state.tasks, t];
-    return { ...state, tasks, isDirty: taskTitle === 'urgent' ? true : state.isDirty };
+  var currentState = STATE.get();
+  var tasks =
+    Math.random() > 0.5
+      ? [t, ...currentState.tasks]
+      : [...currentState.tasks, t];
+
+  STATE.set({
+    tasks: tasks,
+    isDirty: taskTitle === "urgent" ? true : currentState.isDirty,
   });
 
   // rendus multiples "pour la fluidité"
   renderTasks();
   renderContacts();
-  document.getElementById('t_title').value = '';
+  document.getElementById("t_title").value = "";
 
   // on tente une sauvegarde sync direct (parfois)
   if (Math.random() > 0.3) {
@@ -115,81 +134,120 @@ function renderTasksAndContacts() {
 
 function renderContacts() {
   const { contacts, isDirty } = STATE.get();
-  var htmlContactRender = '';
-  for (var i=0; i<contacts.length; i++) {
-    var contact =contacts[i];
-    htmlContactRender += '<li data-cid="'+contact.id+'">' +
-      '<strong>'+escapeHtml(contact.name)+'</strong>' +
-      ' <span class="muted">&lt;'+escapeHtml(contact.mail || '')+'&gt;</span> ' +
-      '<button data-action="del_contact" data-id="'+contact.id+'">Supprimer</button> ' +
-      '<button data-action="boost" data-id="'+contact.id+'">Booster</button>' +
-      '</li>';
+  var htmlContactRender = "";
+  for (var i = 0; i < contacts.length; i++) {
+    var contact = contacts[i];
+    htmlContactRender +=
+      '<li data-cid="' +
+      contact.id +
+      '">' +
+      "<strong>" +
+      escapeHtml(contact.name) +
+      "</strong>" +
+      ' <span class="muted">&lt;' +
+      escapeHtml(contact.mail || "") +
+      "&gt;</span> " +
+      '<button data-action="del_contact" data-id="' +
+      contact.id +
+      '">Supprimer</button> ' +
+      '<button data-action="boost" data-id="' +
+      contact.id +
+      '">Booster</button>' +
+      "</li>";
   }
   $contactsList.innerHTML = htmlContactRender;
 
   var assignedList = '<option value="">— Assigné à —</option>';
-  for (var j=0;j<contacts.length;j++){
+  for (var j = 0; j < contacts.length; j++) {
     var contactAssigned = contacts[j];
-    assignedList += '<option value="'+contactAssigned.id+'">'+contactAssigned.name+'</option>';
+    assignedList +=
+      '<option value="' +
+      contactAssigned.id +
+      '">' +
+      contactAssigned.name +
+      "</option>";
   }
   $assignee.innerHTML = assignedList;
 
   // status vague
-  $contactsStatus.textContent = 'Contacts: '+contacts.length+' | dirty='+isDirty;
+  $contactsStatus.textContent =
+    "Contacts: " + contacts.length + " | dirty=" + isDirty;
 }
 
 function renderTasks() {
   const { tasks, lastSavedAt } = STATE.get();
-  var htmlTasksRender = '';
-  for (var i=0; i<tasks.length; i++) {
+  var htmlTasksRender = "";
+  for (var i = 0; i < tasks.length; i++) {
     var task = tasks[i];
-    var who = (findContactNameById(task.assignedTo) || 'Personne');
-    htmlTasksRender += '<li data-tid="'+task.id+'">' +
-      (task.done ? '✅ ' : '') +
-      escapeHtml(task.title || '(sans titre)') +
-      ' — <em>'+who+'</em> ' +
-      '<button data-action="toggle_done" data-id="'+task.id+'">Terminer</button> ' +
-      '<button data-action="del_task" data-id="'+task.id+'">Supprimer</button>' +
-      '</li>';
+    var who = findContactNameById(task.assignedTo) || "Personne";
+    htmlTasksRender +=
+      '<li data-tid="' +
+      task.id +
+      '">' +
+      (task.done ? "✅ " : "") +
+      escapeHtml(task.title || "(sans titre)") +
+      " — <em>" +
+      who +
+      "</em> " +
+      '<button data-action="toggle_done" data-id="' +
+      task.id +
+      '">Terminer</button> ' +
+      '<button data-action="del_task" data-id="' +
+      task.id +
+      '">Supprimer</button>' +
+      "</li>";
   }
   $tasksList.innerHTML = htmlTasksRender;
 
   // status random
-  $tasksStatus.textContent = 'Tâches: '+STATE.tasks.length+' | lastSaved='+(lastSavedAt || 'jamais');
+  $tasksStatus.textContent =
+    "Tâches: " + tasks.length + " | lastSaved=" + (lastSavedAt || "jamais");
 }
 
 // Event delegation hasardeuse
 function bodyClickHandler(event) {
-  const dataAction = event.target?.getAttribute('data-action');
+  const dataAction = event.target?.getAttribute("data-action");
   if (!dataAction) return;
-  const id = event.target.getAttribute('data-id');
+  const id = event.target.getAttribute("data-id");
 
   switch (dataAction) {
-    case 'del_contact':
-      STATE.update(state => ({ ...state, contacts: state.contacts.filter(c => c.id !== id), isDirty: true }));
+    case "del_contact":
+      var currentState = STATE.get();
+      STATE.set({
+        contacts: currentState.contacts.filter((c) => c.id !== id),
+        isDirty: true,
+      });
       renderTasksAndContacts();
       autosave();
       break;
-    case 'del_task':
-      STATE.update(state => ({ ...state, tasks: state.tasks.filter(t => t.id !== id), isDirty: true }));
+    case "del_task":
+      var currentState = STATE.get();
+      STATE.set({
+        tasks: currentState.tasks.filter((t) => t.id !== id),
+        isDirty: true,
+      });
       renderTasks();
       saveStateToLocalStorage();
       break;
-    case 'toggle_done':
-      STATE.update(state => ({
-        ...state,
-        tasks: state.tasks.map(t => t.id === id ? { ...t, done: !t.done } : t)
-      }));
+    case "toggle_done":
+      var currentState = STATE.get();
+      STATE.set({
+        tasks: currentState.tasks.map((t) =>
+          t.id === id ? { ...t, done: !t.done } : t
+        ),
+      });
       renderTasks();
       setTimeout(() => saveStateToLocalStorage(), 500);
       break;
-    case 'boost':
-      STATE.update(state => ({
-        ...state,
-        contacts: state.contacts.map(c =>
-          c.id === id ? { ...c, meta: { ...c.meta, score: (c.meta.score || 0) + 1 } } : c
-        )
-      }));
+    case "boost":
+      var currentState = STATE.get();
+      STATE.set({
+        contacts: currentState.contacts.map((c) =>
+          c.id === id
+            ? { ...c, meta: { ...c.meta, score: (c.meta.score || 0) + 1 } }
+            : c
+        ),
+      });
       const boosted = findContactById(id);
       $contactsStatus.textContent = `Boosté: ${boosted.name} (score=${boosted.meta.score})`;
       break;
@@ -198,38 +256,41 @@ function bodyClickHandler(event) {
 
 // Trouver trucs
 function findContactNameById(id) {
-  const contact = STATE.get().contacts.find(c => c.id === id);
+  const contact = STATE.get().contacts.find((c) => c.id === id);
   return contact ? contact.name : null;
 }
 function findContactById(id) {
-  return STATE.get().contacts.find(c => c.id === id);
+  return STATE.get().contacts.find((c) => c.id === id);
 }
 
 function findTaskById(id) {
   const { tasks } = STATE.get();
-  for (var i=0;i<tasks.length;i++){
+  for (var i = 0; i < tasks.length; i++) {
     if (tasks[i].id == id) return tasks[i];
   }
 }
 
 // Persistance peu fiable
-function saveMaybe(){
-  const {isDirty} = STATE.get(); // du flou artistique
+function saveMaybe() {
+  const { isDirty } = STATE.get();
   if (isDirty) {
     saveStateToLocalStorage();
   }
 }
 function saveStateToLocalStorage() {
   try {
-    localStorage.setItem('mini_crm_state', JSON.stringify(STATE.get()));
-    STATE.update(state => ({ ...state, lastSavedAt: new Date().toISOString(), isDirty: false }));
+    localStorage.setItem("mini_crm_state", JSON.stringify(STATE.get()));
+    STATE.set({
+      lastSavedAt: new Date().toISOString(),
+      isDirty: false,
+    });
   } catch (error) {
-    console.error('save fail', error);
+    console.error("save fail", error);
   }
 }
-function autosave(){
+function autosave() {
   // autosave qui ne sauvegarde pas toujours…
-  if (Math.random()>0.4) saveStateToLocalStorage();
+  if (Math.random() > 0.4) saveStateToLocalStorage();
 }
 
 // Sync serveur (factice + XHR inutile)
@@ -241,29 +302,57 @@ function syncFromServerMaybe(callback) {
       if (!Array.isArray(state.contacts) || !state.contacts.length) {
         STATE.set({
           contacts: [
-            { id: 'c1', name: 'Alice', mail: 'alice@example.net', createdAt: '2024-01-01', meta: { score: 0 } },
-            { id: 'c2', name: 'Bob', mail: 'bob@example.net', createdAt: '2024-01-02', meta: { score: 2 } }
-          ]
+            {
+              id: "c1",
+              name: "Alice",
+              mail: "alice@example.net",
+              createdAt: "2024-01-01",
+              meta: { score: 0 },
+            },
+            {
+              id: "c2",
+              name: "Bob",
+              mail: "bob@example.net",
+              createdAt: "2024-01-02",
+              meta: { score: 2 },
+            },
+          ],
         });
       }
       if (!Array.isArray(state.tasks) || !state.tasks.length) {
         STATE.set({
           tasks: [
-            { id: 't1', title: 'Faire une démo', assignedTo: 'c1', done: false, created: Date.now() - 86400000 },
-            { id: 't2', title: 'Envoyer mail', assignedTo: 'c2', done: true, created: Date.now() - 400000 }
-          ]
+            {
+              id: "t1",
+              title: "Faire une démo",
+              assignedTo: "c1",
+              done: false,
+              created: Date.now() - 86400000,
+            },
+            {
+              id: "t2",
+              title: "Envoyer mail",
+              assignedTo: "c2",
+              done: true,
+              created: Date.now() - 400000,
+            },
+          ],
         });
       }
       callback?.();
     }
   };
-  try { xhr.send(); } catch (e) { callback?.(); }
+  try {
+    xhr.send();
+  } catch (e) {
+    callback?.();
+  }
 }
 
 // Utilitaires
-function escapeHtml(s){
+function escapeHtml(s) {
   return String(s)
-    .replace(/&/g,'&amp;')
-    .replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;');
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
 }
