@@ -1,11 +1,10 @@
 import State from "./src/js/state.js";
+import { MIN_NAME, MIN_TITLE, SAVE_DEBOUNCE_MS } from "./src/js/config";
 
 let STATE = State();
 
-// "Constantes" magiques
-var MIN_NAME = 2;
-var MIN_TITLE = 3;
-var SAVE_DEBOUNCE_MS = 150;
+// Variables globales pour les éléments DOM
+var $contactsList, $tasksList, $assignee, $contactsStatus, $tasksStatus;
 
 // Démarrage
 document.addEventListener("DOMContentLoaded", function () {
@@ -20,11 +19,11 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   // elements
-  window.$contactsList = document.getElementById("contactsList");
-  window.$tasksList = document.getElementById("tasksList");
-  window.$assignee = document.getElementById("t_assignee");
-  window.$contactsStatus = document.getElementById("contactsStatus");
-  window.$tasksStatus = document.getElementById("tasksStatus");
+  $contactsList = document.getElementById('contactsList');
+  $tasksList = document.getElementById('tasksList');
+  $assignee = document.getElementById('t_assignee');
+  $contactsStatus = document.getElementById('contactsStatus');
+  $tasksStatus = document.getElementById('tasksStatus');
 
   // Bind events (au pif)
   document
@@ -343,9 +342,9 @@ function syncFromServerMaybe(callback) {
     }
   };
   try {
-    xhr.send();
-  } catch (e) {
-    callback?.();
+    xhr.send(); // va 404, et alors ?
+  } catch {
+    callbackFunction && callbackFunction();
   }
 }
 

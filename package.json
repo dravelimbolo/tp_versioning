@@ -1,5 +1,5 @@
 {
-  "module": "src/js/state.js",
+  "type": "module",
   "scripts": {
     "lint": "eslint",
     "lint:fix": "eslint --fix",
